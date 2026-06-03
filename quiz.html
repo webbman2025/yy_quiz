@@ -419,30 +419,20 @@
       return button;
     }
 
-    function renderFeedback(question, selectedLabel, target, { showChangeHint = false, pendingConfirm = false } = {}) {
+    function renderFeedback(question, selectedLabel, target, { showChangeHint = false } = {}) {
       const changeHint = showChangeHint
         ? '<p class="mt-2 text-xs leading-relaxed text-gray-600">點選其他選項可更改答案，再按「下一題」繼續</p>'
-        : '';
-      const pendingHint = pendingConfirm
-        ? `<p class="text-sm leading-relaxed text-gray-700">已選擇 <span class="font-bold">${selectedLabel}</span>，按「下一題」查看結果</p>`
         : '';
 
       target.classList.remove(
         'hidden',
         'border-green-500', 'bg-green-50', 'text-green-800',
         'border-red-500', 'bg-red-50', 'text-red-800',
-        'border-brand-teal', 'bg-brand-teal/5', 'text-gray-800',
         'border'
       );
-
-      if (pendingConfirm) {
-        target.classList.add('border', 'border-brand-teal', 'bg-brand-teal/5', 'text-gray-800');
-        target.innerHTML = pendingHint;
-        return;
-      }
+      target.classList.add('border');
 
       const correct = isCorrect(question, selectedLabel);
-      target.classList.add('border');
 
       if (correct) {
         target.classList.add('border-green-500', 'bg-green-50', 'text-green-800');
@@ -486,9 +476,6 @@
       if (selectedLabel && confirmed) {
         feedbackBox.classList.remove('hidden');
         renderFeedback(question, selectedLabel, feedbackBox, { showChangeHint: true });
-      } else if (selectedLabel) {
-        feedbackBox.classList.remove('hidden');
-        renderFeedback(question, selectedLabel, feedbackBox, { pendingConfirm: true });
       } else {
         feedbackBox.classList.add('hidden');
         feedbackBox.innerHTML = '';
