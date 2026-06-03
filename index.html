@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YY Mobile 每日小測</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              yellow: '#f9ed32',
+              green: '#5cc5c1',
+              teal: '#12c1c3',
+              border: '#e1e0d7',
+            }
+          },
+          fontFamily: {
+            sans: ['"Noto Sans TC"', '"Noto Sans HK"', 'sans-serif'],
+          },
+          boxShadow: {
+            option: '0 0 10px rgba(154, 229, 227, 0.8)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Noto Sans TC', 'Noto Sans HK', sans-serif; }
+    .ink-bg-top {
+      background-image: url('images/watercolor.png');
+      background-size: 280px auto;
+      background-repeat: no-repeat;
+      background-position: top right;
+    }
+    .ink-bg-bottom {
+      background-image: url('images/ink-graphic.png');
+      background-size: 320px auto;
+      background-repeat: no-repeat;
+      background-position: bottom left;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-white text-black antialiased">
+  <div class="relative mx-auto flex min-h-screen max-w-[375px] flex-col overflow-hidden ink-bg-top ink-bg-bottom">
+    <header class="border-b border-brand-border px-5 py-3">
+      <p class="text-center text-sm font-bold tracking-wide text-brand-teal">YY Mobile</p>
+    </header>
+
+    <main class="relative z-10 flex flex-1 flex-col px-6 pb-10 pt-10">
+      <div class="mb-6 inline-flex items-center gap-2 self-center rounded-full bg-brand-teal/10 px-4 py-1.5 text-sm font-bold text-brand-teal">
+        <span aria-hidden="true">✦</span>
+        <span>每日小測</span>
+        <span aria-hidden="true">✦</span>
+      </div>
+
+      <h1 class="mb-4 text-center text-[28px] font-bold leading-tight">
+        中文知識<br>挑戰測驗
+      </h1>
+
+      <p class="mb-8 text-center text-base leading-relaxed text-gray-700">
+        每次測驗隨機抽取 5 道題目，<br>
+        測試你的中文語文功底。<br>
+        準備好了嗎？
+      </p>
+
+      <ul class="mb-10 space-y-3 rounded-[20px] bg-white/80 p-5 shadow-option">
+        <li class="flex items-start gap-3 text-sm leading-relaxed">
+          <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white">1</span>
+          <span>每輪共 5 題，從題庫中隨機抽取</span>
+        </li>
+        <li class="flex items-start gap-3 text-sm leading-relaxed">
+          <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white">2</span>
+          <span>選答後即時顯示正確與否</span>
+        </li>
+        <li class="flex items-start gap-3 text-sm leading-relaxed">
+          <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-teal text-xs font-bold text-white">3</span>
+          <span>完成後查看成績及詳細解析</span>
+        </li>
+      </ul>
+
+      <div class="mt-auto">
+        <a
+          href="quiz.html"
+          class="flex w-full items-center justify-center rounded-full border-b-2 border-l-2 border-brand-green bg-brand-yellow px-8 py-3.5 text-[26px] font-bold text-black transition hover:brightness-95 active:scale-[0.99]"
+        >
+          開始測驗
+        </a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
