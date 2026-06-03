@@ -37,36 +37,43 @@
       --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
     @media (min-width: 431px) { :root { --app-max-width: 430px; } }
-    html {
+    html, body {
       height: 100%;
       -webkit-text-size-adjust: 100%;
     }
     body {
       font-family: 'Noto Sans TC', 'Noto Sans HK', sans-serif;
       width: 100%;
-      min-height: 100dvh;
-      min-height: 100svh;
       margin: 0;
-      overflow-x: hidden;
-    }
-    .page-shell {
+      overflow: hidden;
       display: flex;
       flex-direction: column;
+      height: 100svh;
+      height: 100dvh;
+    }
+    .page-shell {
+      flex: 1 1 0;
+      min-height: 0;
       width: 100%;
       max-width: var(--app-max-width);
-      min-height: 100dvh;
-      min-height: 100svh;
       margin-inline: auto;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .app-scroll {
-      flex: 1 1 auto;
+      flex: 1 1 0;
+      min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: contain;
     }
     .sticky-cta-bar {
       flex-shrink: 0;
-      z-index: 50;
+      width: 100%;
+      max-width: var(--app-max-width);
+      margin-inline: auto;
+      z-index: 100;
       padding: 12px 20px calc(12px + var(--safe-bottom));
       background: #fff;
       box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
@@ -171,43 +178,43 @@
     </section>
       </div>
     </div>
+  </div>
 
-    <div id="quizCtaBar" class="sticky-cta-bar">
-      <div class="sticky-cta-bar__inner flex gap-3">
-        <button
-          id="prevBtn"
-          type="button"
-          class="hidden flex-1 rounded-full border-2 border-brand-teal bg-white py-3 text-base font-bold text-brand-teal transition hover:bg-brand-teal/5"
-        >
-          上一題
-        </button>
-        <button
-          id="nextBtn"
-          type="button"
-          disabled
-          class="flex-[2] rounded-full border-b-2 border-l-2 border-brand-green bg-brand-yellow py-3.5 text-xl font-bold text-black transition enabled:hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          下一題
-        </button>
-      </div>
+  <div id="quizCtaBar" class="sticky-cta-bar">
+    <div class="sticky-cta-bar__inner flex gap-3">
+      <button
+        id="prevBtn"
+        type="button"
+        class="hidden flex-1 rounded-full border-2 border-brand-teal bg-white py-3 text-base font-bold text-brand-teal transition hover:bg-brand-teal/5"
+      >
+        上一題
+      </button>
+      <button
+        id="nextBtn"
+        type="button"
+        disabled
+        class="flex-[2] rounded-full border-b-2 border-l-2 border-brand-green bg-brand-yellow py-3.5 text-xl font-bold text-black transition enabled:hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        下一題
+      </button>
     </div>
+  </div>
 
-    <div id="resultsCtaBar" class="sticky-cta-bar" hidden>
-      <div class="sticky-cta-bar__inner flex flex-col gap-3">
-        <button
-          id="restartBtn"
-          type="button"
-          class="w-full rounded-full border-b-2 border-l-2 border-brand-green bg-brand-yellow py-3.5 text-xl font-bold text-black transition hover:brightness-95"
-        >
-          重新測驗
-        </button>
-        <a
-          href="index.html"
-          class="flex w-full items-center justify-center rounded-full border-2 border-brand-teal bg-white py-3 text-base font-bold text-brand-teal transition hover:bg-brand-teal/5"
-        >
-          返回首頁
-        </a>
-      </div>
+  <div id="resultsCtaBar" class="sticky-cta-bar" hidden>
+    <div class="sticky-cta-bar__inner flex flex-col gap-3">
+      <button
+        id="restartBtn"
+        type="button"
+        class="w-full rounded-full border-b-2 border-l-2 border-brand-green bg-brand-yellow py-3.5 text-xl font-bold text-black transition hover:brightness-95"
+      >
+        重新測驗
+      </button>
+      <a
+        href="index.html"
+        class="flex w-full items-center justify-center rounded-full border-2 border-brand-teal bg-white py-3 text-base font-bold text-brand-teal transition hover:bg-brand-teal/5"
+      >
+        返回首頁
+      </a>
     </div>
   </div>
 
