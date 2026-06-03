@@ -382,10 +382,10 @@
         } else if (selectedLabel === optionLabel) {
           classes.push('border-2 border-red-500 bg-red-50');
         } else {
-          classes.push('border-2 border-transparent opacity-70');
+          classes.push('border-2 border-transparent cursor-pointer hover:border-brand-teal/60');
         }
       } else {
-        classes.push('border-2 border-transparent cursor-pointer');
+        classes.push('border-2 border-transparent cursor-pointer hover:border-brand-teal/60');
       }
 
       return classes.join(' ');
@@ -395,16 +395,19 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = optionClasses(question, selectedLabel, option.label, interactive);
-      button.disabled = !interactive || Boolean(selectedLabel);
+      button.disabled = !interactive;
       button.innerHTML = `<span class="w-full break-words"><span class="font-bold">${option.label}. </span><span class="font-normal">${option.text}</span></span>`;
-      if (interactive && !selectedLabel) {
+      if (interactive) {
         button.addEventListener('click', () => onSelect(option.label));
       }
       return button;
     }
 
-    function renderFeedback(question, selectedLabel, target) {
+    function renderFeedback(question, selectedLabel, target, { showChangeHint = false } = {}) {
       const correct = isCorrect(question, selectedLabel);
+      const changeHint = showChangeHint
+        ? '<p class="mt-2 text-xs leading-relaxed text-gray-600">點選其他選項可更改答案，按「下一題」確認</p>'
+        : '';
       target.classList.remove('hidden', 'border-green-500', 'bg-green-50', 'text-green-800', 'border-red-500', 'bg-red-50', 'text-red-800', 'border');
       target.classList.add('border');
 
@@ -413,6 +416,7 @@
         target.innerHTML = `
           <p class="mb-1 text-base font-bold">正確</p>
           ${question.explanation ? `<p>${question.explanation}</p>` : '<p>答得好！</p>'}
+          ${changeHint}
         `;
       } else {
         target.classList.add('border-red-500', 'bg-red-50', 'text-red-800');
@@ -421,6 +425,7 @@
           <p class="mb-1 text-base font-bold">錯誤</p>
           <p>正確答案：<span class="font-bold">${question.correct}. ${correctOption.text}</span></p>
           ${question.explanation ? `<p class="mt-2">${question.explanation}</p>` : ''}
+          ${changeHint}
         `;
       }
     }
@@ -446,7 +451,7 @@
 
       if (selectedLabel) {
         feedbackBox.classList.remove('hidden');
-        renderFeedback(question, selectedLabel, feedbackBox);
+        renderFeedback(question, selectedLabel, feedbackBox, { showChangeHint: true });
       } else {
         feedbackBox.classList.add('hidden');
         feedbackBox.innerHTML = '';
