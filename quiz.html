@@ -31,7 +31,39 @@
     }
   </script>
   <style>
-    body { font-family: 'Noto Sans TC', 'Noto Sans HK', sans-serif; }
+    :root { --app-max-width: 100%; }
+    @media (min-width: 431px) { :root { --app-max-width: 430px; } }
+    body {
+      font-family: 'Noto Sans TC', 'Noto Sans HK', sans-serif;
+      width: 100%;
+      overflow-x: hidden;
+    }
+    .app-shell {
+      width: 100%;
+      max-width: var(--app-max-width);
+      margin-inline: auto;
+      min-height: 100dvh;
+    }
+    .content-with-sticky-cta {
+      padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    }
+    .content-with-sticky-cta--tall {
+      padding-bottom: calc(168px + env(safe-area-inset-bottom, 0px));
+    }
+    .sticky-cta-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.95) 30%, #fff 100%);
+    }
+    .sticky-cta-bar__inner {
+      width: 100%;
+      max-width: var(--app-max-width);
+      margin-inline: auto;
+    }
     .ink-bg-top::before,
     .ink-bg-bottom::after {
       content: '';
@@ -42,36 +74,27 @@
       mix-blend-mode: multiply;
     }
     .ink-bg-top::before {
-      top: 120px;
-      right: -40px;
-      width: 280px;
-      height: 180px;
+      top: 24px;
+      right: max(-40px, -10vw);
+      width: min(75vw, 280px);
+      height: min(48vw, 180px);
       background: url('images/watercolor.png') no-repeat center / contain;
     }
     .ink-bg-bottom::after {
-      bottom: 80px;
-      left: -60px;
-      width: 320px;
-      height: 190px;
+      bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+      left: max(-60px, -15vw);
+      width: min(85vw, 320px);
+      height: min(50vw, 190px);
       background: url('images/ink-graphic.png') no-repeat center / contain;
     }
     .option-btn:not(:disabled):hover { border-color: #12c1c3; }
     .view[hidden] { display: none !important; }
   </style>
 </head>
-<body class="min-h-screen bg-white text-black antialiased ink-bg-top ink-bg-bottom">
-  <div class="relative z-10 mx-auto flex min-h-screen max-w-[375px] flex-col">
-    <!-- Header -->
-    <header class="border-b border-brand-border px-4 py-3">
-      <div class="flex items-center justify-between">
-        <a href="index.html" class="text-sm font-bold text-brand-teal" aria-label="返回首頁">← 返回</a>
-        <p class="text-sm font-bold text-brand-teal">每日小測</p>
-        <span class="w-10"></span>
-      </div>
-    </header>
-
+<body class="min-h-[100dvh] bg-white text-black antialiased ink-bg-top ink-bg-bottom">
+  <div class="app-shell relative z-10 flex min-h-[100dvh] flex-col">
     <!-- Quiz View -->
-    <section id="quizView" class="view flex flex-1 flex-col pb-28">
+    <section id="quizView" class="view content-with-sticky-cta flex flex-1 flex-col">
       <div id="progressBar" class="flex items-center justify-center gap-[11px] px-5 py-5"></div>
 
       <p id="progressText" class="mb-2 text-center text-sm font-bold text-brand-teal">1/5</p>
@@ -82,33 +105,33 @@
         </ol>
       </div>
 
-      <div id="optionsContainer" class="flex flex-col items-center gap-4 px-5 py-5"></div>
+      <div id="optionsContainer" class="flex w-full flex-col gap-4 px-5 py-5"></div>
 
       <div id="feedbackBox" class="mx-5 hidden rounded-[20px] px-4 py-3 text-sm leading-relaxed"></div>
-
-      <div class="fixed bottom-0 left-1/2 w-full max-w-[375px] -translate-x-1/2 bg-gradient-to-t from-white via-white to-transparent px-7 pb-6 pt-4">
-        <div class="flex gap-3">
-          <button
-            id="prevBtn"
-            type="button"
-            class="hidden flex-1 rounded-full border-2 border-brand-teal bg-white py-3 text-base font-bold text-brand-teal transition hover:bg-brand-teal/5"
-          >
-            上一題
-          </button>
-          <button
-            id="nextBtn"
-            type="button"
-            disabled
-            class="flex-[2] rounded-full border-b-2 border-l-2 border-brand-green bg-brand-yellow py-3.5 text-xl font-bold text-black transition enabled:hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            下一題
-          </button>
-        </div>
-      </div>
     </section>
 
+    <div id="quizCtaBar" class="sticky-cta-bar">
+      <div class="sticky-cta-bar__inner flex gap-3">
+        <button
+          id="prevBtn"
+          type="button"
+          class="hidden flex-1 rounded-full border-2 border-brand-teal bg-white py-3 text-base font-bold text-brand-teal transition hover:bg-brand-teal/5"
+        >
+          上一題
+        </button>
+        <button
+          id="nextBtn"
+          type="button"
+          disabled
+          class="flex-[2] rounded-full border-b-2 border-l-2 border-brand-green bg-brand-yellow py-3.5 text-xl font-bold text-black transition enabled:hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          下一題
+        </button>
+      </div>
+    </div>
+
     <!-- Results View -->
-    <section id="resultsView" class="view flex flex-1 flex-col px-5 pb-10 pt-6" hidden>
+    <section id="resultsView" class="view content-with-sticky-cta content-with-sticky-cta--tall flex flex-1 flex-col px-5 pt-6" hidden>
       <h2 class="mb-2 text-center text-2xl font-bold">測驗結果</h2>
       <p id="scoreSummary" class="mb-6 text-center text-xl font-bold text-brand-teal"></p>
 
@@ -116,8 +139,10 @@
         <p class="mb-3 text-sm font-bold">答題摘要</p>
         <div id="summaryList" class="space-y-2"></div>
       </div>
+    </section>
 
-      <div class="mt-auto flex flex-col gap-3">
+    <div id="resultsCtaBar" class="sticky-cta-bar" hidden>
+      <div class="sticky-cta-bar__inner flex flex-col gap-3">
         <button
           id="restartBtn"
           type="button"
@@ -132,10 +157,10 @@
           返回首頁
         </a>
       </div>
-    </section>
+    </div>
 
     <!-- Review View -->
-    <section id="reviewView" class="view flex flex-1 flex-col pb-28" hidden>
+    <section id="reviewView" class="view content-with-sticky-cta flex flex-1 flex-col" hidden>
       <div class="border-b border-brand-border px-5 py-4">
         <button id="backToResultsBtn" type="button" class="text-sm font-bold text-brand-teal">← 返回結果</button>
         <p id="reviewProgressText" class="mt-2 text-center text-sm font-bold text-brand-teal"></p>
@@ -147,7 +172,7 @@
         </ol>
       </div>
 
-      <div id="reviewOptionsContainer" class="flex flex-col items-center gap-4 px-5 py-5"></div>
+      <div id="reviewOptionsContainer" class="flex w-full flex-col gap-4 px-5 py-5"></div>
       <div id="reviewFeedbackBox" class="mx-5 rounded-[20px] px-4 py-3 text-sm leading-relaxed"></div>
     </section>
   </div>
@@ -182,6 +207,8 @@
     const reviewQuestionText = document.getElementById('reviewQuestionText');
     const reviewOptionsContainer = document.getElementById('reviewOptionsContainer');
     const reviewFeedbackBox = document.getElementById('reviewFeedbackBox');
+    const quizCtaBar = document.getElementById('quizCtaBar');
+    const resultsCtaBar = document.getElementById('resultsCtaBar');
 
     function shuffle(array) {
       const copy = [...array];
@@ -223,6 +250,8 @@
       quizView.hidden = viewName !== 'quiz';
       resultsView.hidden = viewName !== 'results';
       reviewView.hidden = viewName !== 'review';
+      quizCtaBar.hidden = viewName !== 'quiz';
+      resultsCtaBar.hidden = viewName !== 'results';
     }
 
     function renderProgressBar() {
@@ -253,7 +282,7 @@
 
     function optionClasses(question, selectedLabel, optionLabel, interactive) {
       const classes = [
-        'option-btn w-full max-w-[320px] rounded-[20px] bg-white/80 p-3 text-left text-[18px] leading-normal shadow-option transition',
+        'option-btn w-full rounded-[20px] bg-white/80 p-3 text-left text-base leading-normal shadow-option transition sm:text-[18px]',
       ];
 
       if (!interactive) {
