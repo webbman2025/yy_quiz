@@ -25,6 +25,7 @@
           },
           boxShadow: {
             option: '0 0 10px rgba(154, 229, 227, 0.8)',
+            card: '0 0 2px rgba(0, 0, 0, 0.25)',
           }
         }
       }
@@ -89,6 +90,17 @@
     }
     .option-btn:not(:disabled):hover { border-color: #12c1c3; }
     .view[hidden] { display: none !important; }
+    .question-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 0 2px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+    }
+    .question-card__prompt ol {
+      list-style-position: outside;
+      padding-left: 27px;
+      margin-left: 0;
+    }
   </style>
 </head>
 <body class="min-h-[100dvh] bg-white text-black antialiased ink-bg-top ink-bg-bottom">
@@ -98,17 +110,20 @@
       <p id="weekLabel" class="pt-5 text-center text-sm font-bold text-brand-teal">第 1 週</p>
       <div id="progressBar" class="flex items-center justify-center gap-[11px] px-5 py-5"></div>
 
-      <p id="progressText" class="mb-2 text-center text-sm font-bold text-brand-teal">1/5</p>
+      <p id="progressText" class="mb-4 text-center text-sm font-bold text-brand-teal">1/5</p>
 
-      <div class="px-5">
-        <ol id="questionNumber" class="mb-4 list-decimal pl-6 text-lg font-bold leading-[26px]">
-          <li id="questionText"></li>
-        </ol>
+      <div class="mx-5">
+        <div class="question-card py-5">
+          <div class="question-card__prompt px-5">
+            <ol class="list-decimal text-[18px] font-bold leading-[26px] break-words">
+              <li id="questionText"></li>
+            </ol>
+          </div>
+          <div id="optionsContainer" class="flex w-full flex-col gap-4 p-5"></div>
+        </div>
+
+        <div id="feedbackBox" class="mt-4 hidden rounded-[16px] px-4 py-3 text-sm leading-relaxed"></div>
       </div>
-
-      <div id="optionsContainer" class="flex w-full flex-col gap-4 px-5 py-5"></div>
-
-      <div id="feedbackBox" class="mx-5 hidden rounded-[20px] px-4 py-3 text-sm leading-relaxed"></div>
     </section>
 
     <div id="quizCtaBar" class="sticky-cta-bar">
@@ -167,14 +182,18 @@
         <p id="reviewProgressText" class="mt-2 text-center text-sm font-bold text-brand-teal"></p>
       </div>
 
-      <div class="px-5 pt-4">
-        <ol class="mb-4 list-decimal pl-6 text-lg font-bold leading-[26px]">
-          <li id="reviewQuestionText"></li>
-        </ol>
-      </div>
+      <div class="mx-5 pt-4">
+        <div class="question-card py-5">
+          <div class="question-card__prompt px-5">
+            <ol class="list-decimal text-[18px] font-bold leading-[26px] break-words">
+              <li id="reviewQuestionText"></li>
+            </ol>
+          </div>
+          <div id="reviewOptionsContainer" class="flex w-full flex-col gap-4 p-5"></div>
+        </div>
 
-      <div id="reviewOptionsContainer" class="flex w-full flex-col gap-4 px-5 py-5"></div>
-      <div id="reviewFeedbackBox" class="mx-5 rounded-[20px] px-4 py-3 text-sm leading-relaxed"></div>
+        <div id="reviewFeedbackBox" class="mt-4 rounded-[16px] px-4 py-3 text-sm leading-relaxed"></div>
+      </div>
     </section>
   </div>
 
@@ -322,7 +341,7 @@
 
     function optionClasses(question, selectedLabel, optionLabel, interactive) {
       const classes = [
-        'option-btn w-full rounded-[20px] bg-white/80 p-3 text-left text-base leading-normal shadow-option transition sm:text-[18px]',
+        'option-btn flex w-full items-center justify-center rounded-[20px] bg-white/80 p-3 text-left text-[18px] leading-normal shadow-option transition',
       ];
 
       if (!interactive) {
@@ -356,7 +375,7 @@
       button.type = 'button';
       button.className = optionClasses(question, selectedLabel, option.label, interactive);
       button.disabled = !interactive || Boolean(selectedLabel);
-      button.innerHTML = `<span class="font-bold">${option.label}. </span><span>${option.text}</span>`;
+      button.innerHTML = `<span class="w-full break-words"><span class="font-bold">${option.label}. </span><span class="font-normal">${option.text}</span></span>`;
       if (interactive && !selectedLabel) {
         button.addEventListener('click', () => onSelect(option.label));
       }
