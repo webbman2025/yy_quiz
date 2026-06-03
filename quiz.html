@@ -95,6 +95,7 @@
   <div class="app-shell relative z-10 flex min-h-[100dvh] flex-col">
     <!-- Quiz View -->
     <section id="quizView" class="view content-with-sticky-cta flex flex-1 flex-col">
+      <p id="weekLabel" class="pt-5 text-center text-sm font-bold text-brand-teal">第 1 週</p>
       <div id="progressBar" class="flex items-center justify-center gap-[11px] px-5 py-5"></div>
 
       <p id="progressText" class="mb-2 text-center text-sm font-bold text-brand-teal">1/5</p>
@@ -179,10 +180,10 @@
 
   <script src="questions.js"></script>
   <script>
-    const QUIZ_SIZE = 5;
-    const LABELS = ['A', 'B', 'C', 'D'];
+    const QUIZ_SIZE = QUIZ_CONFIG.questionsPerWeek;
 
     const state = {
+      currentWeek: 1,
       sessionQuestions: [],
       currentIndex: 0,
       answers: {},
@@ -193,6 +194,7 @@
     const resultsView = document.getElementById('resultsView');
     const reviewView = document.getElementById('reviewView');
     const progressBar = document.getElementById('progressBar');
+    const weekLabel = document.getElementById('weekLabel');
     const progressText = document.getElementById('progressText');
     const questionText = document.getElementById('questionText');
     const optionsContainer = document.getElementById('optionsContainer');
@@ -219,8 +221,46 @@
       return copy;
     }
 
-    function pickRandomQuestions() {
-      return shuffle(QUESTION_BANK).slice(0, QUIZ_SIZE);
+    function parseLocalDate(dateString) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+
+    function getCurrentWeekNumber() {
+      const weekOverride = new URLSearchParams(window.location.search).get('week');
+      if (weekOverride) {
+        const week = Number.parseInt(weekOverride, 10);
+        if (week >= 1 && week <= QUIZ_CONFIG.totalWeeks) return week;
+      }
+
+      const startDate = parseLocalDate(QUIZ_CONFIG.campaignStartDate);
+      const today = new Date();
+      const startMidnight = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const diffDays = Math.floor((todayMidnight - startMidnight) / (1000 * 60 * 60 * 24));
+      const week = Math.floor(diffDays / 7) + 1;
+
+      if (week < 1) return 1;
+      if (week > QUIZ_CONFIG.totalWeeks) return QUIZ_CONFIG.totalWeeks;
+      return week;
+    }
+
+    function getWeekQuestionIds(weekNumber) {
+      const startId = (weekNumber - 1) * QUIZ_CONFIG.questionsPerWeek + 1;
+      return Array.from({ length: QUIZ_CONFIG.questionsPerWeek }, (_, index) => startId + index);
+    }
+
+    function getWeekQuestions(weekNumber) {
+      const ids = getWeekQuestionIds(weekNumber);
+      return ids
+        .map((id) => QUESTION_BANK.find((question) => question.id === id))
+        .filter(Boolean);
+    }
+
+    function pickSessionQuestions() {
+      const week = getCurrentWeekNumber();
+      const questions = shuffle(getWeekQuestions(week));
+      return { week, questions };
     }
 
     function getCurrentQuestion() {
@@ -350,6 +390,7 @@
       const selectedLabel = getSelectedLabel();
 
       renderProgressBar();
+      weekLabel.textContent = `第 ${state.currentWeek} 週`;
       progressText.textContent = `${state.currentIndex + 1}/${QUIZ_SIZE}`;
       questionText.innerHTML = question.question;
 
@@ -379,7 +420,7 @@
     function renderResults() {
       const correctCount = countCorrectAnswers();
       const percentage = Math.round((correctCount / QUIZ_SIZE) * 100);
-      scoreSummary.textContent = `${correctCount}/${QUIZ_SIZE} 正確 • ${percentage}%`;
+      scoreSummary.textContent = `第 ${state.currentWeek} 週 • ${correctCount}/${QUIZ_SIZE} 正確 • ${percentage}%`;
 
       summaryList.innerHTML = '';
       state.sessionQuestions.forEach((question, index) => {
@@ -433,7 +474,9 @@
     }
 
     function startQuiz() {
-      state.sessionQuestions = pickRandomQuestions();
+      const session = pickSessionQuestions();
+      state.currentWeek = session.week;
+      state.sessionQuestions = session.questions;
       state.currentIndex = 0;
       state.answers = {};
       showView('quiz');
