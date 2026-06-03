@@ -421,10 +421,10 @@
 
     function renderFeedback(question, selectedLabel, target, { showChangeHint = false, pendingConfirm = false } = {}) {
       const changeHint = showChangeHint
-        ? '<p class="mt-2 text-xs leading-relaxed text-gray-600">點選其他選項可更改答案，按「下一題」繼續</p>'
+        ? '<p class="mt-2 text-xs leading-relaxed text-gray-600">點選其他選項可更改答案，再按「下一題」繼續</p>'
         : '';
       const pendingHint = pendingConfirm
-        ? `<p class="text-sm leading-relaxed text-gray-700">已選擇 <span class="font-bold">${selectedLabel}</span>，按「確認答案」查看結果</p>`
+        ? `<p class="text-sm leading-relaxed text-gray-700">已選擇 <span class="font-bold">${selectedLabel}</span>，按「下一題」查看結果</p>`
         : '';
 
       target.classList.remove(
@@ -496,14 +496,7 @@
 
       prevBtn.classList.toggle('hidden', state.currentIndex === 0);
       nextBtn.disabled = !selectedLabel;
-
-      if (!confirmed) {
-        nextBtn.textContent = '確認答案';
-      } else if (state.currentIndex === QUIZ_SIZE - 1) {
-        nextBtn.textContent = '查看結果';
-      } else {
-        nextBtn.textContent = '下一題';
-      }
+      nextBtn.textContent = confirmed && state.currentIndex === QUIZ_SIZE - 1 ? '查看結果' : '下一題';
     }
 
     function renderResults() {
