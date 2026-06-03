@@ -227,6 +227,7 @@
       sessionQuestions: [],
       currentIndex: 0,
       answers: {},
+      confirmed: {},
       mode: 'quiz',
     };
 
@@ -311,6 +312,10 @@
       return Object.prototype.hasOwnProperty.call(state.answers, index);
     }
 
+    function isConfirmed(index = state.currentIndex) {
+      return state.confirmed[index] === true;
+    }
+
     function getSelectedLabel(index = state.currentIndex) {
       return state.answers[index] ?? null;
     }
@@ -344,14 +349,16 @@
           'flex h-[21px] w-[21px] items-center justify-center rounded-full text-[11px] font-bold leading-none transition',
           i === state.currentIndex
             ? 'bg-brand-teal text-white'
-            : isAnswered(i)
+            : isConfirmed(i)
               ? 'border-2 border-brand-teal bg-brand-teal/15 text-brand-teal'
-              : 'border-2 border-brand-teal text-brand-teal',
+              : isAnswered(i)
+                ? 'border-2 border-dashed border-brand-teal text-brand-teal'
+                : 'border-2 border-brand-teal text-brand-teal',
         ].join(' ');
         step.textContent = String(i + 1);
         step.addEventListener('click', () => {
           if (state.mode !== 'quiz') return;
-          if (i <= state.currentIndex || isAnswered(i)) {
+          if (i <= state.currentIndex || isConfirmed(i)) {
             state.currentIndex = i;
             renderQuiz();
           }
@@ -360,7 +367,7 @@
       }
     }
 
-    function optionClasses(question, selectedLabel, optionLabel, interactive) {
+    function optionClasses(question, selectedLabel, optionLabel, interactive, revealed) {
       const classes = [
         'option-btn flex w-full items-center justify-center rounded-[20px] bg-white/80 p-3 text-left text-[18px] leading-normal shadow-option transition',
       ];
@@ -372,6 +379,15 @@
           classes.push('border-2 border-red-500 bg-red-50');
         } else {
           classes.push('border-2 border-transparent');
+        }
+        return classes.join(' ');
+      }
+
+      if (!revealed) {
+        if (selectedLabel === optionLabel) {
+          classes.push('border-2 border-brand-teal bg-brand-teal/10');
+        } else {
+          classes.push('border-2 border-transparent cursor-pointer hover:border-brand-teal/60');
         }
         return classes.join(' ');
       }
@@ -391,10 +407,10 @@
       return classes.join(' ');
     }
 
-    function buildOptionButton(question, option, selectedLabel, interactive, onSelect) {
+    function buildOptionButton(question, option, selectedLabel, interactive, revealed, onSelect) {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = optionClasses(question, selectedLabel, option.label, interactive);
+      button.className = optionClasses(question, selectedLabel, option.label, interactive, revealed);
       button.disabled = !interactive;
       button.innerHTML = `<span class="w-full break-words"><span class="font-bold">${option.label}. </span><span class="font-normal">${option.text}</span></span>`;
       if (interactive) {
@@ -403,12 +419,29 @@
       return button;
     }
 
-    function renderFeedback(question, selectedLabel, target, { showChangeHint = false } = {}) {
-      const correct = isCorrect(question, selectedLabel);
+    function renderFeedback(question, selectedLabel, target, { showChangeHint = false, pendingConfirm = false } = {}) {
       const changeHint = showChangeHint
-        ? '<p class="mt-2 text-xs leading-relaxed text-gray-600">點選其他選項可更改答案，按「下一題」確認</p>'
+        ? '<p class="mt-2 text-xs leading-relaxed text-gray-600">點選其他選項可更改答案，按「下一題」繼續</p>'
         : '';
-      target.classList.remove('hidden', 'border-green-500', 'bg-green-50', 'text-green-800', 'border-red-500', 'bg-red-50', 'text-red-800', 'border');
+      const pendingHint = pendingConfirm
+        ? `<p class="text-sm leading-relaxed text-gray-700">已選擇 <span class="font-bold">${selectedLabel}</span>，按「確認答案」查看結果</p>`
+        : '';
+
+      target.classList.remove(
+        'hidden',
+        'border-green-500', 'bg-green-50', 'text-green-800',
+        'border-red-500', 'bg-red-50', 'text-red-800',
+        'border-brand-teal', 'bg-brand-teal/5', 'text-gray-800',
+        'border'
+      );
+
+      if (pendingConfirm) {
+        target.classList.add('border', 'border-brand-teal', 'bg-brand-teal/5', 'text-gray-800');
+        target.innerHTML = pendingHint;
+        return;
+      }
+
+      const correct = isCorrect(question, selectedLabel);
       target.classList.add('border');
 
       if (correct) {
@@ -433,6 +466,7 @@
     function renderQuiz() {
       const question = getCurrentQuestion();
       const selectedLabel = getSelectedLabel();
+      const confirmed = isConfirmed();
 
       renderProgressBar();
       weekLabel.textContent = `第 ${state.currentWeek} 週`;
@@ -442,16 +476,19 @@
       optionsContainer.innerHTML = '';
       question.options.forEach((option) => {
         optionsContainer.appendChild(
-          buildOptionButton(question, option, selectedLabel, true, (label) => {
+          buildOptionButton(question, option, selectedLabel, true, confirmed, (label) => {
             state.answers[state.currentIndex] = label;
             renderQuiz();
           })
         );
       });
 
-      if (selectedLabel) {
+      if (selectedLabel && confirmed) {
         feedbackBox.classList.remove('hidden');
         renderFeedback(question, selectedLabel, feedbackBox, { showChangeHint: true });
+      } else if (selectedLabel) {
+        feedbackBox.classList.remove('hidden');
+        renderFeedback(question, selectedLabel, feedbackBox, { pendingConfirm: true });
       } else {
         feedbackBox.classList.add('hidden');
         feedbackBox.innerHTML = '';
@@ -459,7 +496,14 @@
 
       prevBtn.classList.toggle('hidden', state.currentIndex === 0);
       nextBtn.disabled = !selectedLabel;
-      nextBtn.textContent = state.currentIndex === QUIZ_SIZE - 1 ? '查看結果' : '下一題';
+
+      if (!confirmed) {
+        nextBtn.textContent = '確認答案';
+      } else if (state.currentIndex === QUIZ_SIZE - 1) {
+        nextBtn.textContent = '查看結果';
+      } else {
+        nextBtn.textContent = '下一題';
+      }
     }
 
     function renderResults() {
@@ -505,7 +549,7 @@
       reviewOptionsContainer.innerHTML = '';
       question.options.forEach((option) => {
         reviewOptionsContainer.appendChild(
-          buildOptionButton(question, option, selectedLabel, false, null)
+          buildOptionButton(question, option, selectedLabel, false, true, null)
         );
       });
 
@@ -524,6 +568,7 @@
       state.sessionQuestions = session.questions;
       state.currentIndex = 0;
       state.answers = {};
+      state.confirmed = {};
       showView('quiz');
       renderQuiz();
     }
@@ -537,6 +582,12 @@
 
     nextBtn.addEventListener('click', () => {
       if (!isAnswered()) return;
+
+      if (!isConfirmed()) {
+        state.confirmed[state.currentIndex] = true;
+        renderQuiz();
+        return;
+      }
 
       if (state.currentIndex < QUIZ_SIZE - 1) {
         state.currentIndex += 1;
