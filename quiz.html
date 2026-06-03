@@ -106,6 +106,7 @@
       background: url('images/ink-graphic.png') no-repeat center / contain;
     }
     .option-btn:not(:disabled):hover { border-color: #12c1c3; }
+    .option-btn:disabled { cursor: default; opacity: 1; }
     .view[hidden] { display: none !important; }
     .question-card {
       background: #fff;
@@ -126,15 +127,13 @@
       <div class="pb-6">
     <!-- Quiz View -->
     <section id="quizView" class="view flex flex-col">
-      <p id="weekLabel" class="pt-5 text-center text-sm font-bold text-brand-teal">第 1 週</p>
-      <div id="progressBar" class="flex items-center justify-center gap-[11px] px-5 py-5"></div>
-
-      <p id="progressText" class="mb-4 text-center text-sm font-bold text-brand-teal">1/5</p>
+      <p id="weekLabel" class="pt-5 text-center text-[18px] font-bold text-brand-teal">第 1 週</p>
+      <div id="progressBar" class="flex items-center justify-center gap-[16px] px-5 py-5"></div>
 
       <div class="mx-5">
         <div class="question-card py-5">
           <div class="question-card__prompt px-5">
-            <ol class="list-decimal text-[18px] font-bold leading-[26px] break-words">
+            <ol id="questionList" start="1" class="list-decimal text-[18px] font-bold leading-[26px] break-words">
               <li id="questionText"></li>
             </ol>
           </div>
@@ -166,7 +165,7 @@
       <div class="mx-5 pt-4">
         <div class="question-card py-5">
           <div class="question-card__prompt px-5">
-            <ol class="list-decimal text-[18px] font-bold leading-[26px] break-words">
+            <ol id="reviewQuestionList" start="1" class="list-decimal text-[18px] font-bold leading-[26px] break-words">
               <li id="reviewQuestionText"></li>
             </ol>
           </div>
@@ -236,8 +235,8 @@
     const reviewView = document.getElementById('reviewView');
     const progressBar = document.getElementById('progressBar');
     const weekLabel = document.getElementById('weekLabel');
-    const progressText = document.getElementById('progressText');
     const questionText = document.getElementById('questionText');
+    const questionList = document.getElementById('questionList');
     const optionsContainer = document.getElementById('optionsContainer');
     const feedbackBox = document.getElementById('feedbackBox');
     const prevBtn = document.getElementById('prevBtn');
@@ -248,10 +247,12 @@
     const backToResultsBtn = document.getElementById('backToResultsBtn');
     const reviewProgressText = document.getElementById('reviewProgressText');
     const reviewQuestionText = document.getElementById('reviewQuestionText');
+    const reviewQuestionList = document.getElementById('reviewQuestionList');
     const reviewOptionsContainer = document.getElementById('reviewOptionsContainer');
     const reviewFeedbackBox = document.getElementById('reviewFeedbackBox');
     const quizCtaBar = document.getElementById('quizCtaBar');
     const resultsCtaBar = document.getElementById('resultsCtaBar');
+    const appScroll = document.querySelector('.app-scroll');
 
     function shuffle(array) {
       const copy = [...array];
@@ -337,6 +338,12 @@
       reviewView.hidden = viewName !== 'review';
       quizCtaBar.hidden = viewName !== 'quiz';
       resultsCtaBar.hidden = viewName !== 'results';
+
+      if (viewName === 'results' && appScroll) {
+        window.requestAnimationFrame(() => {
+          appScroll.scrollTop = 0;
+        });
+      }
     }
 
     function renderProgressBar() {
@@ -346,7 +353,7 @@
         step.type = 'button';
         step.setAttribute('aria-label', `第 ${i + 1} 題`);
         step.className = [
-          'flex h-[21px] w-[21px] items-center justify-center rounded-full text-[11px] font-bold leading-none transition',
+          'flex h-[32px] w-[32px] items-center justify-center rounded-full text-[16px] font-bold leading-none transition',
           i === state.currentIndex
             ? 'bg-brand-teal text-white'
             : isConfirmed(i)
@@ -378,7 +385,7 @@
         } else if (selectedLabel === optionLabel && optionLabel !== question.correct) {
           classes.push('border-2 border-red-500 bg-red-50');
         } else {
-          classes.push('border-2 border-transparent');
+          classes.push('border-2 border-transparent opacity-60');
         }
         return classes.join(' ');
       }
@@ -390,18 +397,6 @@
           classes.push('border-2 border-transparent cursor-pointer hover:border-brand-teal/60');
         }
         return classes.join(' ');
-      }
-
-      if (selectedLabel) {
-        if (optionLabel === question.correct) {
-          classes.push('border-2 border-green-500 bg-green-50');
-        } else if (selectedLabel === optionLabel) {
-          classes.push('border-2 border-red-500 bg-red-50');
-        } else {
-          classes.push('border-2 border-transparent cursor-pointer hover:border-brand-teal/60');
-        }
-      } else {
-        classes.push('border-2 border-transparent cursor-pointer hover:border-brand-teal/60');
       }
 
       return classes.join(' ');
@@ -419,11 +414,18 @@
       return button;
     }
 
-    function renderFeedback(question, selectedLabel, target, { showChangeHint = false } = {}) {
-      const changeHint = showChangeHint
-        ? '<p class="mt-2 text-xs leading-relaxed text-gray-600">點選其他選項可更改答案，再按「下一題」繼續</p>'
-        : '';
+    function scrollFeedbackIntoView() {
+      if (!appScroll || feedbackBox.hidden) return;
+      window.requestAnimationFrame(() => {
+        const boxTop = feedbackBox.getBoundingClientRect().top;
+        const scrollBottom = appScroll.getBoundingClientRect().bottom;
+        if (boxTop > scrollBottom - 120) {
+          feedbackBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    }
 
+    function renderFeedback(question, selectedLabel, target) {
       target.classList.remove(
         'hidden',
         'border-green-500', 'bg-green-50', 'text-green-800',
@@ -439,7 +441,6 @@
         target.innerHTML = `
           <p class="mb-1 text-base font-bold">正確</p>
           ${question.explanation ? `<p>${question.explanation}</p>` : '<p>答得好！</p>'}
-          ${changeHint}
         `;
       } else {
         target.classList.add('border-red-500', 'bg-red-50', 'text-red-800');
@@ -448,7 +449,6 @@
           <p class="mb-1 text-base font-bold">錯誤</p>
           <p>正確答案：<span class="font-bold">${question.correct}. ${correctOption.text}</span></p>
           ${question.explanation ? `<p class="mt-2">${question.explanation}</p>` : ''}
-          ${changeHint}
         `;
       }
     }
@@ -460,13 +460,13 @@
 
       renderProgressBar();
       weekLabel.textContent = `第 ${state.currentWeek} 週`;
-      progressText.textContent = `${state.currentIndex + 1}/${QUIZ_SIZE}`;
+      questionList.start = state.currentIndex + 1;
       questionText.innerHTML = question.question;
 
       optionsContainer.innerHTML = '';
       question.options.forEach((option) => {
         optionsContainer.appendChild(
-          buildOptionButton(question, option, selectedLabel, true, confirmed, (label) => {
+          buildOptionButton(question, option, selectedLabel, !confirmed, false, (label) => {
             state.answers[state.currentIndex] = label;
             renderQuiz();
           })
@@ -475,7 +475,7 @@
 
       if (selectedLabel && confirmed) {
         feedbackBox.classList.remove('hidden');
-        renderFeedback(question, selectedLabel, feedbackBox, { showChangeHint: true });
+        renderFeedback(question, selectedLabel, feedbackBox);
       } else {
         feedbackBox.classList.add('hidden');
         feedbackBox.innerHTML = '';
@@ -483,7 +483,14 @@
 
       prevBtn.classList.toggle('hidden', state.currentIndex === 0);
       nextBtn.disabled = !selectedLabel;
-      nextBtn.textContent = confirmed && state.currentIndex === QUIZ_SIZE - 1 ? '查看結果' : '下一題';
+
+      if (!confirmed) {
+        nextBtn.textContent = '確認';
+      } else if (state.currentIndex === QUIZ_SIZE - 1) {
+        nextBtn.textContent = '查看結果';
+      } else {
+        nextBtn.textContent = '下一題';
+      }
     }
 
     function renderResults() {
@@ -524,6 +531,7 @@
       const selectedLabel = getSelectedLabel(state.currentIndex);
 
       reviewProgressText.textContent = `第 ${state.currentIndex + 1} 題 / 共 ${QUIZ_SIZE} 題`;
+      reviewQuestionList.start = state.currentIndex + 1;
       reviewQuestionText.innerHTML = question.question;
 
       reviewOptionsContainer.innerHTML = '';
@@ -566,6 +574,7 @@
       if (!isConfirmed()) {
         state.confirmed[state.currentIndex] = true;
         renderQuiz();
+        scrollFeedbackIntoView();
         return;
       }
 
