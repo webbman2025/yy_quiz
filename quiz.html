@@ -130,7 +130,7 @@
       <p id="weekLabel" class="pt-5 text-center text-[18px] font-bold text-brand-teal">第 1 週</p>
       <div id="progressBar" class="flex items-center justify-center gap-[16px] px-5 py-5"></div>
 
-      <div class="mx-5">
+      <div class="mx-5 pb-4">
         <div class="question-card py-5">
           <div class="question-card__prompt px-5">
             <ol id="questionList" start="1" class="list-decimal text-[18px] font-bold leading-[26px] break-words">
@@ -146,8 +146,35 @@
 
     <!-- Results View -->
     <section id="resultsView" class="view flex flex-col px-5 pt-6" hidden>
-      <h2 class="mb-2 text-center text-2xl font-bold">測驗結果</h2>
-      <p id="scoreSummary" class="mb-6 text-center text-xl font-bold text-brand-teal"></p>
+      <div id="resultsDashboard" class="mb-6 flex items-center gap-6 rounded-[24px] bg-brand-green px-6 py-4">
+        <div class="flex shrink-0 flex-col items-center">
+          <p id="scorePercent" class="text-[52px] font-black leading-none tracking-wide text-white">0%</p>
+          <p class="pt-1 text-[14pt] font-normal tracking-[0.2em] text-white">分數</p>
+        </div>
+
+        <div class="min-w-0 flex-1 rounded-[16px] bg-white p-2.5">
+          <p class="text-[16pt] font-bold text-black">每日小測結果</p>
+          <p id="resultsWeekLabel" class="mt-0.5 text-[14pt] text-gray-500">第 1 週</p>
+
+          <div class="flex items-center gap-2 pt-2.5">
+            <span class="h-2 w-2 shrink-0 rounded-[4px] bg-green-500" aria-hidden="true"></span>
+            <div class="h-1 min-w-0 flex-1 overflow-hidden rounded bg-gray-800">
+              <div id="correctBar" class="h-full rounded bg-green-500" style="width: 0%"></div>
+            </div>
+            <span id="correctCountEl" class="w-4 shrink-0 text-right text-[12pt] font-bold text-black">0</span>
+          </div>
+
+          <div class="flex items-center gap-2 pt-1.5">
+            <span class="h-2 w-2 shrink-0 rounded-[4px] bg-red-500" aria-hidden="true"></span>
+            <div class="h-1 min-w-0 flex-1 overflow-hidden rounded bg-gray-800">
+              <div id="incorrectBar" class="h-full rounded bg-red-500" style="width: 0%"></div>
+            </div>
+            <span id="incorrectCountEl" class="w-4 shrink-0 text-right text-[12pt] font-bold text-black">0</span>
+          </div>
+
+          <p id="resultsTotalLabel" class="pt-2 text-[14pt] text-gray-500">共 5 題</p>
+        </div>
+      </div>
 
       <div class="mb-6 rounded-[20px] bg-white/80 p-4 shadow-option">
         <p class="mb-3 text-sm font-bold">答題摘要</p>
@@ -241,7 +268,13 @@
     const feedbackBox = document.getElementById('feedbackBox');
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
-    const scoreSummary = document.getElementById('scoreSummary');
+    const scorePercent = document.getElementById('scorePercent');
+    const resultsWeekLabel = document.getElementById('resultsWeekLabel');
+    const correctBar = document.getElementById('correctBar');
+    const incorrectBar = document.getElementById('incorrectBar');
+    const correctCountEl = document.getElementById('correctCountEl');
+    const incorrectCountEl = document.getElementById('incorrectCountEl');
+    const resultsTotalLabel = document.getElementById('resultsTotalLabel');
     const summaryList = document.getElementById('summaryList');
     const restartBtn = document.getElementById('restartBtn');
     const backToResultsBtn = document.getElementById('backToResultsBtn');
@@ -416,12 +449,29 @@
 
     function scrollFeedbackIntoView() {
       if (!appScroll || feedbackBox.hidden) return;
+
       window.requestAnimationFrame(() => {
-        const boxTop = feedbackBox.getBoundingClientRect().top;
-        const scrollBottom = appScroll.getBoundingClientRect().bottom;
-        if (boxTop > scrollBottom - 120) {
-          feedbackBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+        window.requestAnimationFrame(() => {
+          const scrollRect = appScroll.getBoundingClientRect();
+          const feedbackRect = feedbackBox.getBoundingClientRect();
+          const bottomGap = 16;
+
+          if (feedbackRect.top < scrollRect.top) {
+            appScroll.scrollBy({
+              top: feedbackRect.top - scrollRect.top - 8,
+              behavior: 'smooth',
+            });
+            return;
+          }
+
+          const targetBottom = scrollRect.bottom - bottomGap;
+          if (feedbackRect.bottom > targetBottom) {
+            appScroll.scrollBy({
+              top: feedbackRect.bottom - targetBottom,
+              behavior: 'smooth',
+            });
+          }
+        });
       });
     }
 
@@ -493,37 +543,96 @@
       }
     }
 
+    let resultsAnimFrame = null;
+
+    function cancelResultsAnimation() {
+      if (resultsAnimFrame !== null) {
+        cancelAnimationFrame(resultsAnimFrame);
+        resultsAnimFrame = null;
+      }
+    }
+
+    function easeOutCubic(t) {
+      return 1 - (1 - t) ** 3;
+    }
+
+    function animateResultsDashboard({ percentage, correctCount, incorrectCount }) {
+      cancelResultsAnimation();
+
+      const correctBarPct = (correctCount / QUIZ_SIZE) * 100;
+      const incorrectBarPct = (incorrectCount / QUIZ_SIZE) * 100;
+      const duration = 900;
+      const barTransition = `width ${duration}ms cubic-bezier(0.33, 1, 0.68, 1)`;
+
+      scorePercent.textContent = '0%';
+      correctCountEl.textContent = '0';
+      incorrectCountEl.textContent = '0';
+      correctBar.style.transition = 'none';
+      incorrectBar.style.transition = 'none';
+      correctBar.style.width = '0%';
+      incorrectBar.style.width = '0%';
+      void correctBar.offsetWidth;
+
+      correctBar.style.transition = barTransition;
+      incorrectBar.style.transition = barTransition;
+
+      const start = performance.now();
+
+      function tick(now) {
+        const eased = easeOutCubic(Math.min((now - start) / duration, 1));
+
+        scorePercent.textContent = `${Math.round(percentage * eased)}%`;
+        correctCountEl.textContent = String(Math.round(correctCount * eased));
+        incorrectCountEl.textContent = String(Math.round(incorrectCount * eased));
+
+        if (eased < 1) {
+          resultsAnimFrame = requestAnimationFrame(tick);
+        } else {
+          scorePercent.textContent = `${percentage}%`;
+          correctCountEl.textContent = String(correctCount);
+          incorrectCountEl.textContent = String(incorrectCount);
+          resultsAnimFrame = null;
+        }
+      }
+
+      requestAnimationFrame(() => {
+        correctBar.style.width = `${correctBarPct}%`;
+        incorrectBar.style.width = `${incorrectBarPct}%`;
+        resultsAnimFrame = requestAnimationFrame(tick);
+      });
+    }
+
     function renderResults() {
       const correctCount = countCorrectAnswers();
+      const incorrectCount = QUIZ_SIZE - correctCount;
       const percentage = Math.round((correctCount / QUIZ_SIZE) * 100);
-      scoreSummary.textContent = `第 ${state.currentWeek} 週 • ${correctCount}/${QUIZ_SIZE} 正確 • ${percentage}%`;
+
+      resultsWeekLabel.textContent = `第 ${state.currentWeek} 週`;
+      resultsTotalLabel.textContent = `共 ${QUIZ_SIZE} 題`;
 
       summaryList.innerHTML = '';
       state.sessionQuestions.forEach((question, index) => {
         const selected = getSelectedLabel(index);
         const correct = isCorrect(question, selected);
-        const item = document.createElement('button');
-        item.type = 'button';
+        const item = document.createElement('div');
         item.className = [
-          'flex w-full items-start gap-3 rounded-[16px] border px-3 py-3 text-left transition hover:brightness-95',
+          'flex w-full items-start gap-3 rounded-[16px] border px-3 py-3 text-left',
           correct ? 'border-green-400 bg-green-50' : 'border-red-400 bg-red-50',
         ].join(' ');
         item.innerHTML = `
           <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${correct ? 'bg-green-500' : 'bg-red-500'}">${index + 1}</span>
           <span class="flex-1 text-sm leading-relaxed">
             <span class="font-bold ${correct ? 'text-green-700' : 'text-red-700'}">${correct ? '正確' : '錯誤'}</span>
-            <span class="mt-1 block text-black">${stripHtml(question.question).slice(0, 48)}${stripHtml(question.question).length > 48 ? '…' : ''}</span>
+            <span class="mt-1 block text-black">${question.question}</span>
           </span>
         `;
-        item.addEventListener('click', () => {
-          state.currentIndex = index;
-          renderReview();
-          showView('review');
-        });
         summaryList.appendChild(item);
       });
 
       showView('results');
+      requestAnimationFrame(() => {
+        animateResultsDashboard({ percentage, correctCount, incorrectCount });
+      });
     }
 
     function renderReview() {
@@ -542,12 +651,6 @@
       });
 
       renderFeedback(question, selectedLabel, reviewFeedbackBox);
-    }
-
-    function stripHtml(html) {
-      const temp = document.createElement('div');
-      temp.innerHTML = html;
-      return temp.textContent || temp.innerText || '';
     }
 
     function startQuiz() {
